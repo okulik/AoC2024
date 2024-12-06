@@ -45,19 +45,14 @@ func ExampleReportIsSafe() {
 }
 
 func ExampleReportIsSafeWithDampener() {
-	levels := [][]int{
+	for _, level := range [][]int{
 		{79, 80, 83, 83, 85, 86, 89, 90},
 		{1, 3, 7, 8, 9, 12},
 		{8, 6, 7, 8, 9, 12},
+	} {
+		safe, _ := day2.ReportIsSafeWithDampener(level)
+		fmt.Printf("%t\n", safe)
 	}
-	safe, _ := day2.ReportIsSafeWithDampener(levels[0])
-	fmt.Printf("%t\n", safe)
-
-	safe, _ = day2.ReportIsSafeWithDampener(levels[1])
-	fmt.Printf("%t\n", safe)
-
-	safe, _ = day2.ReportIsSafeWithDampener(levels[2])
-	fmt.Printf("%t\n", safe)
 
 	// Output:
 	// true

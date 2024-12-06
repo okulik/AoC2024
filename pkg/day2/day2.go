@@ -3,6 +3,7 @@ package day2
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"strconv"
@@ -10,22 +11,23 @@ import (
 )
 
 func Run() {
-	str, err := os.ReadFile("pkg/two/input")
+	file, err := os.Open("pkg/day2/input")
 	if err != nil {
-		panic("Can't read input file")
+		panic("Can't open input file")
 	}
+	defer func() { _ = file.Close() }()
 
-	safe, unsafe := CountSafeReports(strings.NewReader(string(str)), ReportIsSafe)
+	safe, unsafe := CountSafeReports(file, ReportIsSafe)
 	fmt.Printf("Safe reports %d, unsafe reports %d\n", safe, unsafe)
 
-	safe, unsafe = CountSafeReports(strings.NewReader(string(str)), ReportIsSafeWithDampener)
+	safe, unsafe = CountSafeReports(file, ReportIsSafeWithDampener)
 	fmt.Printf("Dampener safe reports %d, unsafe reports %d\n", safe, unsafe)
 }
 
-func CountSafeReports(reader *strings.Reader, safeFn func([]int) (bool, int)) (int, int) {
+func CountSafeReports(input io.Reader, safeFn func([]int) (bool, int)) (int, int) {
 	safeReports, unsafeReports := 0, 0
 
-	scanner := bufio.NewScanner(reader)
+	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if len(line) == 0 {

@@ -3,6 +3,7 @@ package day1
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"sort"
@@ -11,7 +12,25 @@ import (
 )
 
 func Run() {
-	lists, err := ConvertInputToLists()
+	file, err := os.Open("pkg/day1/input")
+	if err != nil {
+		panic("Can't open input file")
+	}
+	defer func() { _ = file.Close() }()
+
+	distances := CalculateDistances(file)
+	fmt.Printf("Total distances: %d\n", distances)
+
+	if _, err := file.Seek(0, 0); err != nil {
+		panic("Can't seek file start")
+	}
+
+	similarity := CalculateSimilarityScore(file)
+	fmt.Printf("Similarity score: %d\n", similarity)
+}
+
+func CalculateDistances(input io.Reader) int {
+	lists, err := convertInputToLists(input)
 	if err != nil {
 		panic(fmt.Sprintln(err))
 	}
@@ -25,7 +44,18 @@ func Run() {
 		sum += int(math.Abs(float64(lists[0][i] - lists[1][i])))
 	}
 
-	fmt.Printf("Total distances: %d\n", sum)
+	return sum
+}
+
+func CalculateSimilarityScore(input io.Reader) int {
+	lists, err := convertInputToLists(input)
+	if err != nil {
+		panic(fmt.Sprintln(err))
+	}
+
+	for _, list := range lists {
+		sort.Ints(list)
+	}
 
 	m := make(map[int]int)
 	for _, el := range lists[1] {
@@ -39,21 +69,19 @@ func Run() {
 		}
 	}
 
-	fmt.Printf("Similarity score: %d\n", sim)
+	return sim
 }
 
-func ConvertInputToLists() ([][]int, error) {
-	file, err := os.Open("pkg/one/input")
-	if err != nil {
-		return nil, fmt.Errorf("can't open input file")
-	}
-	defer func() { _ = file.Close() }()
-
+func convertInputToLists(input io.Reader) ([][]int, error) {
 	lists := make([][]int, 2)
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
-		elements := strings.Split(scanner.Text(), "   ")
-		if err := AppendLineElementsToLists(elements, lists); err != nil {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) == 0 {
+			continue
+		}
+		elements := strings.Split(line, "   ")
+		if err := appendLineElementsToLists(elements, lists); err != nil {
 			return nil, fmt.Errorf("error occured: %v", err)
 		}
 	}
@@ -61,7 +89,7 @@ func ConvertInputToLists() ([][]int, error) {
 	return lists, nil
 }
 
-func AppendLineElementsToLists(elements []string, lists [][]int) error {
+func appendLineElementsToLists(elements []string, lists [][]int) error {
 	for ind, el := range elements {
 		num, err := strconv.Atoi(el)
 		if err != nil {
