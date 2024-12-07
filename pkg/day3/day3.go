@@ -13,7 +13,7 @@ import (
 var re *regexp.Regexp = regexp.MustCompile(`mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)`)
 
 func Run() {
-	file, err := os.Open("../../pkg/day3/input")
+	file, err := os.Open("pkg/day3/input")
 	if err != nil {
 		panic("Can't open input file")
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/okulik/aoc2024/pkg/day1"
+	"github.com/okulik/AoC2024/pkg/day1"
 )
 
 func ExampleCalculateDistances() {
