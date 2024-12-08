@@ -14,6 +14,6 @@ func ExampleSumAllMultiplications() {
 	`
 
 	sum := day3.SumAllMultiplications(strings.NewReader(testInput))
-	fmt.Printf("%d", sum)
+	fmt.Println(sum)
 	// Output: 54
 }

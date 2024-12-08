@@ -16,8 +16,8 @@ func ExampleWordCounter_CountSequences() {
 	`
 
 	wc := day4.NewWordCounter(strings.NewReader(testInput))
-	count := wc.CountSequences([]byte("XMAS"))
-	fmt.Printf("%d\n", count)
+	count, _ := wc.CountSequences([]byte("XMAS"))
+	fmt.Println(count)
 	// Output: 5
 }
 
@@ -35,7 +35,7 @@ func ExampleWordCounter_CountCrossSequences() {
 	`
 
 	wc := day4.NewWordCounter(strings.NewReader(testInput))
-	count := wc.CountCrossSequences([]byte("MAS"))
-	fmt.Printf("%d\n", count)
+	count, _ := wc.CountCrossSequences([]byte("MAS"))
+	fmt.Println(count)
 	// Output: 9
 }

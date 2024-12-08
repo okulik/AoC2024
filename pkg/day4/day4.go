@@ -29,10 +29,16 @@ func Run() {
 	defer func() { _ = file.Close() }()
 
 	wordCounter := NewWordCounter(file)
-	count := wordCounter.CountSequences([]byte("XMAS"))
+	count, err := wordCounter.CountSequences([]byte("XMAS"))
+	if err != nil {
+		panic(err)
+	}
 	fmt.Printf("Total count of XMAS is %d\n", count)
 
-	count = wordCounter.CountCrossSequences([]byte("MAS"))
+	count, err = wordCounter.CountCrossSequences([]byte("MAS"))
+	if err != nil {
+		panic(err)
+	}
 	fmt.Printf("Total count of X-MAS is %d\n", count)
 }
 
@@ -61,42 +67,38 @@ func NewWordCounter(input io.Reader) *WordCounter {
 	}
 }
 
-func (wc *WordCounter) CountSequences(seq []byte) int {
+func (wc *WordCounter) CountSequences(seq []byte) (int, error) {
 	if len(seq) < 2 {
-		panic("Sequence should be at least 2 chars long")
+		return 0, fmt.Errorf("sequence should be at least 2 chars long")
 	}
 
 	count := 0
 	for row := range wc.letterMatrix {
 		for col := range wc.letterMatrix[row] {
-			count += wc.countSequence(seq, row, col)
+			for _, foo := range moves {
+				if wc.findSubsequence(seq, row, col, foo) {
+					count++
+				}
+			}
 		}
 	}
 
-	return count
+	return count, nil
 }
 
-func (wc *WordCounter) countSequence(seq []byte, row, col int) int {
-	count := 0
-	for _, foo := range moves {
-		if wc.findSubsequence(seq, row, col, foo) {
-			count++
-		}
+func (wc *WordCounter) CountCrossSequences(seq []byte) (int, error) {
+	if len(seq) < 2 {
+		return 0, fmt.Errorf("sequence should be at least 2 chars long")
 	}
 
-	return count
-}
-
-func (wc *WordCounter) CountCrossSequences(seq []byte) int {
 	sum := 0
-
 	for row := range wc.letterMatrix {
 		for col := range wc.letterMatrix[row] {
 			sum += wc.countCrossSequence(seq, row, col)
 		}
 	}
 
-	return sum / 2
+	return sum / 2, nil
 }
 
 func (wc *WordCounter) countCrossSequence(seq []byte, row, col int) int {

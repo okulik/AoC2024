@@ -51,7 +51,7 @@ func ExampleReportIsSafeWithDampener() {
 		{8, 6, 7, 8, 9, 12},
 	} {
 		safe, _ := day2.ReportIsSafeWithDampener(level)
-		fmt.Printf("%t\n", safe)
+		fmt.Println(safe)
 	}
 
 	// Output:

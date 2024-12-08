@@ -7,8 +7,7 @@ import (
 	"github.com/okulik/AoC2024/pkg/day1"
 )
 
-func ExampleCalculateDistances() {
-	testInput := `
+var testInput = `
 52630   25877
 45307   76591
 95628   97627
@@ -24,13 +23,17 @@ func ExampleCalculateDistances() {
 41869   90570
 17863   78355
 `
+
+func ExampleCalculateDistances() {
 	distances := day1.CalculateDistances(strings.NewReader(testInput))
-	fmt.Printf("Total distances: %d\n", distances)
-
-	similarity := day1.CalculateSimilarityScore(strings.NewReader(testInput))
-	fmt.Printf("Similarity score: %d\n", similarity)
-
+	fmt.Println(distances)
 	// Output:
-	// Total distances: 168958
-	// Similarity score: 235065
+	// 168958
+}
+
+func ExampleCalculateSimilarityScore() {
+	similarity := day1.CalculateSimilarityScore(strings.NewReader(testInput))
+	fmt.Println(similarity)
+	// Output:
+	// 235065
 }
