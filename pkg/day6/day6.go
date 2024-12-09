@@ -84,20 +84,23 @@ func NewGuardDetector(input io.Reader) *GuardDetector {
 
 func (gd *GuardDetector) CountDistinctGuardLocations() int {
 	path := make(map[string]bool)
-	_ = gd.moveGuard(path, gd.guard, gd.move)
+	_ = gd.moveGuard(path, nil)
 	return gd.countVisitedPositions(path)
 }
 
-func (gd *GuardDetector) moveGuard(path map[string]bool, guardLocation location, moveIndex int) bool {
+func (gd *GuardDetector) moveGuard(path map[string]bool, extraObstacle *location) bool {
+	loc := gd.guard
+	mv := gd.move
+
 	for {
-		tag := tag(guardLocation, moveIndex)
+		tag := tag(loc, mv)
 		if _, ok := path[tag]; ok {
 			return true
 		}
 
 		path[tag] = true
 
-		tentativeGuardLocation := moves[moveIndex](guardLocation)
+		tentativeGuardLocation := moves[mv](loc)
 		if tentativeGuardLocation.x < 0 ||
 			tentativeGuardLocation.x >= len(gd.grid[0]) ||
 			tentativeGuardLocation.y < 0 ||
@@ -105,12 +108,13 @@ func (gd *GuardDetector) moveGuard(path map[string]bool, guardLocation location,
 			return false
 		}
 
-		if gd.grid[tentativeGuardLocation.y][tentativeGuardLocation.x] == obstacleSymbol {
-			moveIndex = nextMoveIndex(moveIndex)
+		if gd.grid[tentativeGuardLocation.y][tentativeGuardLocation.x] == obstacleSymbol ||
+			extraObstacle != nil && extraObstacle.x == tentativeGuardLocation.x && extraObstacle.y == tentativeGuardLocation.y {
+			mv = nextMoveIndex(mv)
 			continue
 		}
 
-		guardLocation = tentativeGuardLocation
+		loc = tentativeGuardLocation
 	}
 }
 
@@ -123,7 +127,6 @@ func (gd *GuardDetector) countVisitedPositions(path map[string]bool) int {
 }
 
 func (gd *GuardDetector) CountNumberOfInfiniteLoops() int {
-	var tmpSymbol byte
 	path := make(map[string]bool, len(gd.grid)*len(gd.grid))
 	count := 0
 
@@ -132,13 +135,10 @@ func (gd *GuardDetector) CountNumberOfInfiniteLoops() int {
 			if (gd.guard.x == x && gd.guard.y == y) || gd.grid[y][x] == obstacleSymbol {
 				continue
 			}
-			tmpSymbol = gd.grid[y][x]
-			gd.grid[y][x] = obstacleSymbol
-			if gd.moveGuard(path, gd.guard, gd.move) {
+			if gd.moveGuard(path, &location{x, y}) {
 				count++
 			}
 			clear(path)
-			gd.grid[y][x] = tmpSymbol
 		}
 	}
 
