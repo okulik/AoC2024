@@ -14,7 +14,6 @@ const (
 )
 
 type location struct{ x, y int }
-type path map[string]bool
 type move func(location) location
 
 var (
@@ -81,13 +80,17 @@ func NewGuardDetector(input io.Reader) *GuardDetector {
 }
 
 func (gd *GuardDetector) CountDistinctGuardLocations() int {
-	grid := copyGrid(gd.grid)
-	gd.moveGuard(grid, gd.guard, gd.move)
-	return gd.countVisitedPositions(grid)
+	path := make(map[string]bool)
+	gd.moveGuard(path, gd.guard, gd.move)
+	return gd.countVisitedPositions(path)
 }
 
-func (gd *GuardDetector) moveGuard(grid [][]byte, guardLocation location, moveIndex int) {
-	grid[guardLocation.y][guardLocation.x] = guardVisitedSymbol
+func (gd *GuardDetector) moveGuard(path map[string]bool, guardLocation location, moveIndex int) {
+	tag := tag(guardLocation, moveIndex)
+	if _, ok := path[tag]; ok {
+		return
+	}
+	path[tag] = true
 
 	tentativeGuardLocation := moves[moveIndex](guardLocation)
 	if tentativeGuardLocation.x < 0 ||
@@ -97,36 +100,20 @@ func (gd *GuardDetector) moveGuard(grid [][]byte, guardLocation location, moveIn
 		return
 	}
 
-	if grid[tentativeGuardLocation.y][tentativeGuardLocation.x] == obstacleSymbol {
-		gd.moveGuard(grid, guardLocation, nextMoveIndex(moveIndex))
+	if gd.grid[tentativeGuardLocation.y][tentativeGuardLocation.x] == obstacleSymbol {
+		gd.moveGuard(path, guardLocation, nextMoveIndex(moveIndex))
 		return
 	}
 
-	gd.moveGuard(grid, tentativeGuardLocation, moveIndex)
+	gd.moveGuard(path, tentativeGuardLocation, moveIndex)
 }
 
-func (gd *GuardDetector) countVisitedPositions(grid [][]byte) int {
-	count := 0
-	for row := range grid {
-		for col := range grid[row] {
-			if grid[row][col] == guardVisitedSymbol {
-				count++
-			}
-		}
+func (gd *GuardDetector) countVisitedPositions(path map[string]bool) int {
+	tags := make(map[string]bool)
+	for tag := range path {
+		tags[strings.Join(strings.Split(tag, "|")[:2], "|")] = true
 	}
-
-	return count
-}
-
-func copyGrid(src [][]byte) [][]byte {
-	dst := make([][]byte, 0, len(src))
-	for _, row := range src {
-		gr := make([]byte, len(row))
-		copy(gr, row)
-		dst = append(dst, gr)
-	}
-
-	return dst
+	return len(tags)
 }
 
 func nextMoveIndex(moveIndex int) int {
@@ -135,4 +122,8 @@ func nextMoveIndex(moveIndex int) int {
 		mi = 0
 	}
 	return mi
+}
+
+func tag(loc location, mv int) string {
+	return fmt.Sprintf("%d|%d|%d", loc.x, loc.y, mv)
 }
