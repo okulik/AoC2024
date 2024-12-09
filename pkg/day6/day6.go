@@ -37,6 +37,9 @@ func Run() {
 
 	count := gd.CountDistinctGuardLocations()
 	fmt.Printf("Guard visited locations: %d\n", count)
+
+	count = gd.CountNumberOfInfiniteLoops()
+	fmt.Printf("Guard infinite loops: %d\n", count)
 }
 
 type GuardDetector struct {
@@ -81,15 +84,16 @@ func NewGuardDetector(input io.Reader) *GuardDetector {
 
 func (gd *GuardDetector) CountDistinctGuardLocations() int {
 	path := make(map[string]bool)
-	gd.moveGuard(path, gd.guard, gd.move)
+	_ = gd.moveGuard(path, gd.guard, gd.move)
 	return gd.countVisitedPositions(path)
 }
 
-func (gd *GuardDetector) moveGuard(path map[string]bool, guardLocation location, moveIndex int) {
+func (gd *GuardDetector) moveGuard(path map[string]bool, guardLocation location, moveIndex int) bool {
 	tag := tag(guardLocation, moveIndex)
 	if _, ok := path[tag]; ok {
-		return
+		return true
 	}
+
 	path[tag] = true
 
 	tentativeGuardLocation := moves[moveIndex](guardLocation)
@@ -97,15 +101,14 @@ func (gd *GuardDetector) moveGuard(path map[string]bool, guardLocation location,
 		tentativeGuardLocation.x >= len(gd.grid[0]) ||
 		tentativeGuardLocation.y < 0 ||
 		tentativeGuardLocation.y >= len(gd.grid) {
-		return
+		return false
 	}
 
 	if gd.grid[tentativeGuardLocation.y][tentativeGuardLocation.x] == obstacleSymbol {
-		gd.moveGuard(path, guardLocation, nextMoveIndex(moveIndex))
-		return
+		return gd.moveGuard(path, guardLocation, nextMoveIndex(moveIndex))
 	}
 
-	gd.moveGuard(path, tentativeGuardLocation, moveIndex)
+	return gd.moveGuard(path, tentativeGuardLocation, moveIndex)
 }
 
 func (gd *GuardDetector) countVisitedPositions(path map[string]bool) int {
@@ -114,6 +117,29 @@ func (gd *GuardDetector) countVisitedPositions(path map[string]bool) int {
 		tags[strings.Join(strings.Split(tag, "|")[:2], "|")] = true
 	}
 	return len(tags)
+}
+
+func (gd *GuardDetector) CountNumberOfInfiniteLoops() int {
+	var tmpSymbol byte
+	path := make(map[string]bool, len(gd.grid)*len(gd.grid))
+	count := 0
+
+	for y := range gd.grid {
+		for x := range gd.grid[y] {
+			if (gd.guard.x == x && gd.guard.y == y) || gd.grid[y][x] == obstacleSymbol {
+				continue
+			}
+			tmpSymbol = gd.grid[y][x]
+			gd.grid[y][x] = obstacleSymbol
+			if gd.moveGuard(path, gd.guard, gd.move) {
+				count++
+			}
+			clear(path)
+			gd.grid[y][x] = tmpSymbol
+		}
+	}
+
+	return count
 }
 
 func nextMoveIndex(moveIndex int) int {
