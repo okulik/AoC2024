@@ -89,26 +89,29 @@ func (gd *GuardDetector) CountDistinctGuardLocations() int {
 }
 
 func (gd *GuardDetector) moveGuard(path map[string]bool, guardLocation location, moveIndex int) bool {
-	tag := tag(guardLocation, moveIndex)
-	if _, ok := path[tag]; ok {
-		return true
+	for {
+		tag := tag(guardLocation, moveIndex)
+		if _, ok := path[tag]; ok {
+			return true
+		}
+
+		path[tag] = true
+
+		tentativeGuardLocation := moves[moveIndex](guardLocation)
+		if tentativeGuardLocation.x < 0 ||
+			tentativeGuardLocation.x >= len(gd.grid[0]) ||
+			tentativeGuardLocation.y < 0 ||
+			tentativeGuardLocation.y >= len(gd.grid) {
+			return false
+		}
+
+		if gd.grid[tentativeGuardLocation.y][tentativeGuardLocation.x] == obstacleSymbol {
+			moveIndex = nextMoveIndex(moveIndex)
+			continue
+		}
+
+		guardLocation = tentativeGuardLocation
 	}
-
-	path[tag] = true
-
-	tentativeGuardLocation := moves[moveIndex](guardLocation)
-	if tentativeGuardLocation.x < 0 ||
-		tentativeGuardLocation.x >= len(gd.grid[0]) ||
-		tentativeGuardLocation.y < 0 ||
-		tentativeGuardLocation.y >= len(gd.grid) {
-		return false
-	}
-
-	if gd.grid[tentativeGuardLocation.y][tentativeGuardLocation.x] == obstacleSymbol {
-		return gd.moveGuard(path, guardLocation, nextMoveIndex(moveIndex))
-	}
-
-	return gd.moveGuard(path, tentativeGuardLocation, moveIndex)
 }
 
 func (gd *GuardDetector) countVisitedPositions(path map[string]bool) int {
