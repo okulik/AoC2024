@@ -24,3 +24,9 @@ func ExampleFormulaCalibrator_SumFixFormulas() {
 	fmt.Println(fc.SumFixFormulas())
 	// Output: 3749
 }
+
+func ExampleFormulaCalibrator_SumFixFormulasWithConcatenation() {
+	fc := day7.NewFormulaCalibrator(strings.NewReader(testInput))
+	fmt.Println(fc.SumFixFormulasWithConcatenation())
+	// Output: 11387
+}

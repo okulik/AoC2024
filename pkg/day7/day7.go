@@ -14,9 +14,11 @@ type funcOp func(int, int) int
 var opsMap = map[string]funcOp{
 	"+": func(m, n int) int { return m + n },
 	"*": func(m, n int) int { return m * n },
+	"|": func(m, n int) int {
+		num, _ := strconv.Atoi(strconv.Itoa(m) + strconv.Itoa(n))
+		return num
+	},
 }
-
-var opsAlphabet = "+*"
 
 func Run() {
 	file, err := os.Open("pkg/day7/input")
@@ -29,6 +31,9 @@ func Run() {
 
 	sum := fc.SumFixFormulas()
 	fmt.Printf("Fixed formulas sum is: %d\n", sum)
+
+	sum = fc.SumFixFormulasWithConcatenation()
+	fmt.Printf("Fixed formulas with concatenations sum is: %d\n", sum)
 }
 
 type formula struct {
@@ -79,7 +84,28 @@ func (fc *FormulaCalibrator) SumFixFormulas() int {
 	totalSum := 0
 
 	for _, formula := range fc.formulas {
-		permOps := permutateAlphabet(opsAlphabet, len(formula.nums)-1)
+		permOps := permutateAlphabet("+*", len(formula.nums)-1)
+
+		for _, ops := range permOps {
+			sum := formula.nums[0]
+			for i, op := range ops {
+				sum = opsMap[string(op)](sum, formula.nums[i+1])
+			}
+			if sum == formula.sum {
+				totalSum += sum
+				break
+			}
+		}
+	}
+
+	return totalSum
+}
+
+func (fc *FormulaCalibrator) SumFixFormulasWithConcatenation() int {
+	totalSum := 0
+
+	for _, formula := range fc.formulas {
+		permOps := permutateAlphabet("+*|", len(formula.nums)-1)
 
 		for _, ops := range permOps {
 			sum := formula.nums[0]
