@@ -11,6 +11,7 @@ import (
 const (
 	guardVisitedSymbol = 'X'
 	obstacleSymbol     = '#'
+	poolSize           = 50
 )
 
 type location struct{ x, y int }
@@ -127,22 +128,44 @@ func (gd *GuardDetector) countVisitedPositions(path map[string]bool) int {
 }
 
 func (gd *GuardDetector) CountNumberOfInfiniteLoops() int {
-	path := make(map[string]bool, len(gd.grid)*len(gd.grid))
-	count := 0
+	numJobs := len(gd.grid) * len(gd.grid[0])
+	jobs := make(chan location, numJobs)
+	results := make(chan bool, numJobs)
 
+	for i := 0; i < poolSize; i++ {
+		go func(jobs <-chan location, results chan<- bool) {
+			path := make(map[string]bool, 10000)
+			for loc := range jobs {
+				results <- gd.moveGuard(path, &loc)
+				clear(path)
+			}
+		}(jobs, results)
+	}
+
+	gd.gridIterator(func(x, y int) {
+		jobs <- location{x, y}
+	})
+	close(jobs)
+
+	count := 0
+	gd.gridIterator(func(_, _ int) {
+		if <-results {
+			count++
+		}
+	})
+
+	return count
+}
+
+func (gd *GuardDetector) gridIterator(mapFn func(x, y int)) {
 	for y := range gd.grid {
 		for x := range gd.grid[y] {
 			if (gd.guard.x == x && gd.guard.y == y) || gd.grid[y][x] == obstacleSymbol {
 				continue
 			}
-			if gd.moveGuard(path, &location{x, y}) {
-				count++
-			}
-			clear(path)
+			mapFn(x, y)
 		}
 	}
-
-	return count
 }
 
 func nextMoveIndex(moveIndex int) int {
