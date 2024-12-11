@@ -1,6 +1,8 @@
 package main
 
-import "github.com/okulik/AoC2024/pkg/day7"
+import (
+	"github.com/okulik/AoC2024/pkg/day8"
+)
 
 func main() {
 	d1()
@@ -10,6 +12,7 @@ func main() {
 	d5()
 	d6()
 	d7()
+	d8()
 }
 
 func d1() {
@@ -37,5 +40,9 @@ func d6() {
 }
 
 func d7() {
-	day7.Run()
+	//day7.Run()
+}
+
+func d8() {
+	day8.Run()
 }
