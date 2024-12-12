@@ -27,3 +27,9 @@ func ExampleAntennaFinder_CountUniqueAntinodes() {
 	fmt.Println(af.CountUniqueAntinodes())
 	// Output: 14
 }
+
+func ExampleAntennaFinder_CountUniqueAntinodesWithHarmonics() {
+	af := day8.NewAntennaFinder(strings.NewReader(testInput))
+	fmt.Println(af.CountUniqueAntinodesWithHarmonics())
+	// Output: 34
+}

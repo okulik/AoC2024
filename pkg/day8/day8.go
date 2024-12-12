@@ -19,6 +19,9 @@ func Run() {
 
 	count := af.CountUniqueAntinodes()
 	fmt.Printf("Total count of antinodes is %d\n", count)
+
+	count = af.CountUniqueAntinodesWithHarmonics()
+	fmt.Printf("Total count of antinodes including resonant harmonics is %d\n", count)
 }
 
 type location struct {
@@ -66,10 +69,15 @@ func NewAntennaFinder(input io.Reader) *AntennaFinder {
 }
 
 func (af *AntennaFinder) CountUniqueAntinodes() int {
+	af.clearGrid()
+
 	for _, locs := range af.antennas {
+		if len(locs) <= 1 {
+			continue
+		}
 		antennaPairs := generateAntennaPairs(locs)
 		for _, pair := range antennaPairs {
-			af.generateAndSaveAntinodes(pair...)
+			af.generateAndSaveAntinodes(pair[0], pair[1], 1)
 		}
 	}
 
@@ -85,23 +93,82 @@ func (af *AntennaFinder) CountUniqueAntinodes() int {
 	return count
 }
 
-func (af *AntennaFinder) generateAndSaveAntinodes(loc ...location) (location, location) {
-	an1, an2 := generateAntinodes(loc[0], loc[1])
-	af.storeAntinode(an1)
-	af.storeAntinode(an2)
-	return location{}, location{}
-}
+func (af *AntennaFinder) CountUniqueAntinodesWithHarmonics() int {
+	af.clearGrid()
 
-func (af *AntennaFinder) storeAntinode(an location) {
-	if af.outOfGrid(an) {
-		return
+	for _, locs := range af.antennas {
+		if len(locs) <= 1 {
+			continue
+		}
+		antennaPairs := generateAntennaPairs(locs)
+		for _, pair := range antennaPairs {
+			af.generateAndSaveAntinodes(pair[0], pair[1], 0)
+		}
 	}
 
-	af.grid[an.y][an.x] = byte('#')
+	count := 0
+	for row := range af.grid {
+		for col := range af.grid[row] {
+			if af.grid[row][col] == byte('#') {
+				count++
+			}
+		}
+	}
+
+	return count
+}
+
+func (af *AntennaFinder) generateAndSaveAntinodes(ant1, ant2 location, maxNodes int) {
+	dx := ant1.x - ant2.x
+	dy := ant1.y - ant2.y
+
+	antinodes := []location{}
+	anDiag := af.generateUnidirAntinodes(ant1, dx, dy, maxNodes, func(loc *location, dx, dy int) {
+		loc.x += dx
+		loc.y += dy
+	})
+	antinodes = append(antinodes, anDiag...)
+	anDiag = af.generateUnidirAntinodes(ant2, dx, dy, maxNodes, func(loc *location, dx, dy int) {
+		loc.x -= dx
+		loc.y -= dy
+	})
+	antinodes = append(antinodes, anDiag...)
+
+	for _, an := range antinodes {
+		af.grid[an.y][an.x] = byte('#')
+	}
+
+	if maxNodes == 0 {
+		af.grid[ant1.y][ant1.x] = byte('#')
+		af.grid[ant2.y][ant2.x] = byte('#')
+	}
+}
+
+func (af *AntennaFinder) generateUnidirAntinodes(antenna location, dx, dy, maxNodes int, step func(*location, int, int)) []location {
+	antinodes := []location{}
+	ant := location{antenna.x, antenna.y}
+	for {
+		step(&ant, dx, dy)
+		newAntinode := location{ant.x, ant.y}
+		if af.outOfGrid(newAntinode) {
+			break
+		}
+		antinodes = append(antinodes, newAntinode)
+		if maxNodes != 0 && len(antinodes) >= maxNodes {
+			break
+		}
+	}
+	return antinodes
 }
 
 func (af *AntennaFinder) outOfGrid(loc location) bool {
 	return loc.y < 0 || loc.y >= len(af.grid) || loc.x < 0 || loc.x >= len(af.grid[0])
+}
+
+func (af *AntennaFinder) clearGrid() {
+	for _, row := range af.grid {
+		clear(row)
+	}
 }
 
 func generateAntennaPairs(locs []location) [][]location {
@@ -112,16 +179,6 @@ func generateAntennaPairs(locs []location) [][]location {
 		}
 	}
 	return pairs
-}
-
-func generateAntinodes(ant1, ant2 location) (location, location) {
-	diffx := ant1.x - ant2.x
-	diffy := ant1.y - ant2.y
-
-	an1 := location{ant1.x + diffx, ant1.y + diffy}
-	an2 := location{ant2.x - diffx, ant2.y - diffy}
-
-	return an1, an2
 }
 
 func isAntenna(chr byte) bool {
