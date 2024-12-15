@@ -11,8 +11,14 @@ var testInput string = `
 2333133121414131402
 `
 
-func ExampleDiskDefragmenter_CalculateChecksum() {
+func ExampleDiskDefragmenter_DefragmentAndCalculateChecksum() {
 	dd := day9.NewDiskDefragmenter(strings.NewReader(testInput))
-	fmt.Println(dd.CalculateChecksum())
+	fmt.Println(dd.DefragmentAndCalculateChecksum())
 	// Output: 1928
+}
+
+func ExampleDiskDefragmenter_BetterDefragmentAndCalculateChecksum() {
+	dd := day9.NewDiskDefragmenter(strings.NewReader(testInput))
+	fmt.Println(dd.BetterDefragmentAndCalculateChecksum())
+	// Output: 2858
 }

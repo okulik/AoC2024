@@ -15,7 +15,8 @@ func Run() {
 	defer func() { _ = file.Close() }()
 
 	dd := NewDiskDefragmenter(file)
-	fmt.Printf("Check sum is %d\n", dd.CalculateChecksum())
+	fmt.Printf("Defragmented check sum is %d\n", dd.DefragmentAndCalculateChecksum())
+	fmt.Printf("Better defragmented check sum is %d\n", dd.BetterDefragmentAndCalculateChecksum())
 }
 
 type DiskDefragmenter struct {
@@ -51,6 +52,16 @@ func NewDiskDefragmenter(input io.Reader) *DiskDefragmenter {
 		}
 	}
 
+	return &DiskDefragmenter{
+		indexBitmap: indexBitmap,
+		diskImage:   diskImage,
+	}
+}
+
+func (dd *DiskDefragmenter) DefragmentAndCalculateChecksum() int {
+	diskImage := make([]*int, len(dd.diskImage))
+	copy(diskImage, dd.diskImage)
+
 	innerIndex := 0
 	for i := len(diskImage) - 1; i >= 0; i-- {
 		if diskImage[i] == nil {
@@ -65,19 +76,72 @@ func NewDiskDefragmenter(input io.Reader) *DiskDefragmenter {
 		}
 	}
 
-	return &DiskDefragmenter{
-		indexBitmap: indexBitmap,
-		diskImage:   diskImage,
-	}
+	return calculateCheckSum(diskImage)
 }
 
-func (dd *DiskDefragmenter) CalculateChecksum() int {
-	sum := 0
-	for i := range dd.diskImage {
-		if dd.diskImage[i] == nil {
+func (dd *DiskDefragmenter) BetterDefragmentAndCalculateChecksum() int {
+	diskImage := make([]*int, len(dd.diskImage))
+	copy(diskImage, dd.diskImage)
+
+	for i := len(diskImage) - 1; i >= 0; {
+		if diskImage[i] == nil {
+			i--
 			continue
 		}
-		sum += i * *dd.diskImage[i]
+		fileStart, fileStop := dd.findFile(diskImage, i)
+		size := fileStop - fileStart + 1
+		if freeStart := dd.findFreeSpace(diskImage, fileStart, size); freeStart != -1 {
+			for j := 0; j < size; j++ {
+				diskImage[freeStart+j], diskImage[fileStart+j] = diskImage[fileStart+j], nil
+			}
+		}
+		i -= size
+	}
+
+	return calculateCheckSum(diskImage)
+}
+
+func (dd *DiskDefragmenter) findFile(diskImage []*int, stop int) (int, int) {
+	fileIndex := *diskImage[stop]
+	start := stop
+	for i := start - 1; i >= 0; i-- {
+		if diskImage[i] == nil || *diskImage[i] != fileIndex {
+			break
+		}
+		start = i
+	}
+
+	return start, stop
+}
+
+func (dd *DiskDefragmenter) findFreeSpace(diskImage []*int, stop, size int) int {
+	var freeStart int = -1
+	var freeStop int
+
+	for i := 0; i < stop; i++ {
+		if diskImage[i] != nil {
+			freeStart = -1
+			continue
+		}
+		if freeStart == -1 {
+			freeStart = i
+		}
+		freeStop = i
+		if size <= freeStop-freeStart+1 {
+			return freeStart
+		}
+	}
+
+	return -1
+}
+
+func calculateCheckSum(diskImage []*int) int {
+	sum := 0
+	for i := range diskImage {
+		if diskImage[i] == nil {
+			continue
+		}
+		sum += i * *diskImage[i]
 	}
 
 	return sum
