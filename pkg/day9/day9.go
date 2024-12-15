@@ -1,7 +1,6 @@
 package day9
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -25,32 +24,30 @@ type DiskDefragmenter struct {
 }
 
 func NewDiskDefragmenter(input io.Reader) *DiskDefragmenter {
-	indexBitmap := make([]int, 100000)
-	for i := 0; i < 100000; i++ {
+	content, err := io.ReadAll(input)
+	if err != nil {
+		panic("Can't read input file")
+	}
+
+	contentStr := strings.TrimSpace(string(content))
+	diskImage := make([]*int, 0)
+	indexBitmap := make([]int, len(contentStr))
+
+	for i := 0; i < len(contentStr); i++ {
 		indexBitmap[i] = i
 	}
 
-	diskImage := make([]*int, 0)
-	scanner := bufio.NewScanner(input)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-
-		if len(line) == 0 {
-			continue
-		}
-
-		fileIndex := 0
-		for i := range line {
-			for j := 0; j < int(line[i]-'0'); j++ {
-				var indexPtr *int
-				if i%2 == 0 {
-					indexPtr = &indexBitmap[fileIndex]
-				}
-				diskImage = append(diskImage, indexPtr)
-			}
+	fileIndex := 0
+	for i := range contentStr {
+		for j := 0; j < int(contentStr[i]-'0'); j++ {
+			var indexPtr *int
 			if i%2 == 0 {
-				fileIndex++
+				indexPtr = &indexBitmap[fileIndex]
 			}
+			diskImage = append(diskImage, indexPtr)
+		}
+		if i%2 == 0 {
+			fileIndex++
 		}
 	}
 
