@@ -23,3 +23,9 @@ func ExampleHikingGuide_CalculateTrailheadScore() {
 	fmt.Println(hg.CalculateTrailheadScore())
 	// Output: 36
 }
+
+func ExampleHikingGuide_CalculateTrailheadRate() {
+	hg := day10.NewHikingGuide(strings.NewReader(testInput))
+	fmt.Println(hg.CalculateTrailheadRate())
+	// Output: 81
+}

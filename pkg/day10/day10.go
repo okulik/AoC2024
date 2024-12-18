@@ -17,6 +17,7 @@ func Run() {
 
 	hg := NewHikingGuide(file)
 	fmt.Printf("Total trailhead score is %d\n", hg.CalculateTrailheadScore())
+	fmt.Printf("Total trailhead rate is %d\n", hg.CalculateTrailheadRate())
 }
 
 const (
@@ -63,13 +64,19 @@ func (hg *HikingGuide) CalculateTrailheadScore() int {
 			if hg.hikingMap[i][j] == trailHead {
 				sum += hg.pathCount(i, j, trailHead, &cache)
 			}
-			// if len(cache) > 0 {
-			// 	keys := make([]string, 0, len(cache))
-			// 	for k := range cache {
-			// 		keys = append(keys, k)
-			// 	}
-			// 	fmt.Println(keys)
-			// }
+		}
+	}
+
+	return sum
+}
+
+func (hg *HikingGuide) CalculateTrailheadRate() int {
+	sum := 0
+	for i := range hg.hikingMap {
+		for j := range hg.hikingMap[i] {
+			if hg.hikingMap[i][j] == trailHead {
+				sum += hg.pathCount(i, j, trailHead, nil)
+			}
 		}
 	}
 
@@ -86,12 +93,16 @@ func (hg *HikingGuide) pathCount(i, j int, expect byte, cache *map[string]struct
 	}
 
 	if hg.hikingMap[i][j] == trailTop {
-		cacheKey := fmt.Sprintf("%d%d", i, j)
-		if _, ok := (*cache)[cacheKey]; !ok {
-			(*cache)[cacheKey] = struct{}{}
+		if cache != nil {
+			cacheKey := fmt.Sprintf("%d%d", i, j)
+			if _, ok := (*cache)[cacheKey]; !ok {
+				(*cache)[cacheKey] = struct{}{}
+				return 1
+			}
+			return 0
+		} else {
 			return 1
 		}
-		return 0
 	}
 
 	return hg.pathCount(i-1, j, expect+1, cache) +
