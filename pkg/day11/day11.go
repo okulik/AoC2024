@@ -18,24 +18,23 @@ func Run() {
 
 	pp := NewPlutonianPebbles(file)
 	fmt.Printf("Total number of stones after 25 blinks is %d\n", pp.TotalStoneCount(25))
+	fmt.Printf("Total number of stones after 75 blinks is %d\n", pp.TotalStoneCount(75))
 }
 
 type PlutonianPebbles struct {
-	stones []string
+	stones map[int]int
 }
 
 func NewPlutonianPebbles(input io.Reader) *PlutonianPebbles {
-	stones := make([]string, 0)
-
-	var row string
-	scanner := bufio.NewScanner(input)
-	for scanner.Scan() {
-		row = strings.TrimSpace(scanner.Text())
-		if len(row) == 0 {
+	reader := bufio.NewReader(input)
+	line, _ := reader.ReadString('\n')
+	stones := make(map[int]int, 0)
+	for _, numStr := range strings.Split(strings.TrimSpace(line), " ") {
+		if len(numStr) == 0 {
 			continue
 		}
-		stones = strings.Split(row, " ")
-		break
+		num, _ := strconv.Atoi(numStr)
+		stones[num] = 1
 	}
 
 	return &PlutonianPebbles{
@@ -45,40 +44,32 @@ func NewPlutonianPebbles(input io.Reader) *PlutonianPebbles {
 
 func (pp *PlutonianPebbles) TotalStoneCount(blinks int) int {
 	stones := pp.stones
-	for i := 0; i < 25; i++ {
-		stones = pp.rearrangeStones(stones)
+
+	for i := 0; i < blinks; i++ {
+		newStones := make(map[int]int)
+		for num, cnt := range stones {
+			numStr := strconv.Itoa(num)
+			numStrLen := len(numStr)
+			even := numStrLen%2 == 0
+			if num == 0 {
+				newStones[1] += cnt
+				continue
+			} else if even {
+				for _, stn := range []string{numStr[:numStrLen/2], numStr[numStrLen/2:]} {
+					num, _ := strconv.Atoi(stn)
+					newStones[num] += cnt
+				}
+			} else {
+				newStones[num*2024] += cnt
+			}
+		}
+		stones = newStones
 	}
 
-	return len(stones)
-}
-
-func (pp *PlutonianPebbles) rearrangeStones(stones []string) []string {
-	newStones := make([]string, 0, len(stones))
-
-	for _, stone := range stones {
-		if stone == "0" {
-			newStones = append(newStones, "1")
-			continue
-		}
-		if len(stone)%2 == 0 {
-			left, err := strconv.Atoi(stone[:len(stone)/2])
-			if err != nil {
-				panic("Can't read stone")
-			}
-			right, err := strconv.Atoi(stone[len(stone)/2:])
-			if err != nil {
-				panic("Can't read stone")
-			}
-			newStones = append(newStones, fmt.Sprintf("%d", left))
-			newStones = append(newStones, fmt.Sprintf("%d", right))
-			continue
-		}
-		stoneNum, err := strconv.Atoi(stone)
-		if err != nil {
-			panic("Can't read stone")
-		}
-		newStones = append(newStones, fmt.Sprintf("%d", stoneNum*2024))
+	sum := 0
+	for _, values := range stones {
+		sum += values
 	}
 
-	return newStones
+	return sum
 }
